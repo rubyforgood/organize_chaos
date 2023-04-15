@@ -1,6 +1,5 @@
 {
-<<<<<<< Updated upstream
-  "Motels Work": ["motel"],
+  "Motel": ["motel"],
   "Business Support Office": [
     "Business Support Office",
     "B.S.O.",
@@ -23,23 +22,10 @@
     "equitable",
     "equity",
     "Equity Development"
-=======
-  "Motels": [
-    "motel"
-  ],
-  "Business Support Office": [
-    "Business Support Office",
-    "B.S.O.",
-    "bso"
-  ],
-  "Equity Development Office": [
-    "Equity Development Office"
->>>>>>> Stashed changes
   ],
   "Resident Support Office": [
     "Resident Support Office",
     "R.S.O.",
-<<<<<<< Updated upstream
     "rso",
     "low-income renters",
     "low income renters",
@@ -62,11 +48,8 @@
     "vaccine event",
     "Fax Aid Program",
     "East Colfax corridor"
-=======
-    "rso"
->>>>>>> Stashed changes
   ],
   "Communication": [],
-  "Admin": [],
+  "Admin": ["administrative", "Onboarding" ,"Payroll"],
   "The Fax": []
 }

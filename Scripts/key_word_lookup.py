@@ -21,22 +21,19 @@ def get_n_gram_counts(word_list, n_range=3, top_n=10):
         ngram_counts = Counter(ngrams(word_list, nn))
         print(ngram_counts.most_common(top_n))
 
-# def get_CountVectorizer(type='CV'):
-#     if type == "CV":
-#         vect = CountVectorizer(ngram_range=(n, n), lowercase=False, vocabulary=vocab_list, max_features=len(vocab_list)*2)
-#     else:
-#         vect = TfidfVectorizer(ngram_range=(n, n), lowercase=False, vocabulary=vocab_list, max_features=len(vocab_list)*2)
-
-def get_sdg_17_words(word_list, bi, tri, quad):
+def find_cat_words(word_list, bi, tri, quad):
     # lex = open('../resources/lexicon.json')
     with open('../Resources/lexicon.json', 'r') as j:
         lex = json.loads(j.read())
-    trade_words = get_key_gram_count(lex['Trade'], word_list, bi, tri, quad)
-    finance_words = get_key_gram_count(lex['Finance'], word_list, bi, tri, quad)
-    tech_words = get_key_gram_count(lex['Technology'], word_list, bi, tri, quad)
-    sys_issues_words = get_key_gram_count(lex['Systemic Issues'], word_list, bi, tri, quad)
-    cap_building_words = get_key_gram_count(lex['Capacity Building'], word_list, bi, tri, quad)
-    return trade_words, finance_words, tech_words, sys_issues_words, cap_building_words
+
+    motel_words = get_key_gram_count(lex['Motels Work'], word_list, bi, tri, quad)
+    bso_words = get_key_gram_count(lex['Business Support Office'], word_list, bi, tri, quad)
+    edo_words = get_key_gram_count(lex['Equity Development Office'], word_list, bi, tri, quad)
+    rso_issues_words = get_key_gram_count(lex['Resident Support Office"'], word_list, bi, tri, quad)
+    comm_words = get_key_gram_count(lex['Communication'], word_list, bi, tri, quad)
+    admin_words = get_key_gram_count(lex['Admin'], word_list, bi, tri, quad)
+    thefax_words = get_key_gram_count(lex['The Fax'], word_list, bi, tri, quad)
+    return motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words, thefax_words
 
 def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
     kw_unigrams = clean_keywords(key_words)
@@ -82,19 +79,20 @@ def run_analysis(output_path):
         txt = getText(file)
         w_list = tokenize(txt, [], type="word")
         bi, tri, quad = get_ngrams(w_list)
-        country, year = get_country_year(file)
-        trade_words, finance_words, tech_words, sys_issues_words, cap_building_words = get_sdg_17_words(w_list, bi, tri, quad)
-        df_list.append([country, year, len(w_list), trade_words, finance_words, tech_words, sys_issues_words, cap_building_words ])
-    df = pd.DataFrame(df_list, columns=['country','year', 'nvp_17_word_count','trade_words','finance_words','tech_words', 'sys_issues_words', 'cap_building_words'])
-    df['trade_word_perc'] = df['trade_words']/df['nvp_17_word_count']
-    df['finance_word_perc'] = df['finance_words']/df['nvp_17_word_count']
-    df['tech_word_perc'] = df['tech_words']/df['nvp_17_word_count']
-    df['sys_issues_word_perc'] = df['sys_issues_words']/df['nvp_17_word_count']
-    df['cap_building_word_perc'] = df['cap_building_words']/df['nvp_17_word_count']
+        motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words, thefax_words= find_cat_words(w_list, bi, tri, quad)
+        df_list.append([len(w_list), motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words, thefax_words])
+    df = pd.DataFrame(df_list, columns=['doc_word_count','motel_words','bso_words','edo_words', 'rso_issues_words', 'comm_words', 'admin_words', 'thefax_words'])
+    df['motel_words_perc'] = df['motel_words']/df['doc_word_count']
+    df['bso_words_perc'] = df['finance_words']/df['doc_word_count']
+    df['edo_words_perc'] = df['tech_words']/df['doc_word_count']
+    df['rso_issues_perc'] = df['rso_issues_words']/df['doc_word_count']
+    df['comm_words_perc'] = df['comm_words']/df['doc_word_count']
+    df['admin_perc'] = df['admin_words']/df['doc_word_count']
+    df['thefax_perc'] = df['thefax_words']/df['doc_word_count']
 
     print(df.shape)
     print(df)
-    df.to_csv(output_path + "/COUNTRY_RESULTS.csv")
+    df.to_csv(output_path + "/RESULTS.csv")
 
 
 if __name__ == "__main__":
