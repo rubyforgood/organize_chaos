@@ -1,5 +1,7 @@
 {
-  "Motel": ["motel"],
+  "Motel": [
+    "motel"
+  ],
   "Business Support Office": [
     "Business Support Office",
     "B.S.O.",
@@ -50,6 +52,5 @@
     "East Colfax corridor"
   ],
   "Communication": [],
-  "Admin": ["administrative", "Onboarding" ,"Payroll"],
-  "The Fax": []
+  "Admin": []
 }
