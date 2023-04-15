@@ -1,5 +1,3 @@
-import sys
-
 import pypdfium2 as pdfium
 
 
@@ -19,6 +17,3 @@ def get_pdf_content(file: str) -> str:
     except Exception as e:
         print(f"\n\nCannot parse PDF at '{file}'\n\n")
         raise e
-
-
-print(get_pdf_content("./Testing/waiver.pdf"))
