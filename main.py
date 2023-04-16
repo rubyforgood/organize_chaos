@@ -27,6 +27,14 @@ import json
 import sys
 
 [_, DOCUMENTS] = sys.argv
+FILE_NAME_TO_SHORT_NAME = {
+"Motel": "motel",
+"Business Support Office": "bso",
+"Equity Development Office": "edo",
+"Resident Support Office": "rso",
+"Communication": "comm",
+"Admin": "admin",
+}
 MISC_FILE_EXT = [
     "xlsx",
     "html",
@@ -215,7 +223,7 @@ def classify_on_model(output_path, unmatched_files, unmatched):
             breakpoint()
 
         folderList.append([row["Filename"], folder])
-    return dict(folderList)
+    return folderList
     # pd.DataFrame(folderList, columns=['Filename','Folder'])
     # finalOutput.to_csv(output_path + "/FinalOutput.csv")
 
@@ -316,18 +324,24 @@ def run_analysis():
     unmatched_files_level_2 = []
     # Filter by extension
     for file in tqdm(unmatched_files_level_1):
-        classify_on_ext(files, matched_files_level_2, unmatched_files_level_2)
+        classify_on_ext(files,matched_files_level_2, unmatched_files_level_2)
 
-    matched_files_level_3 = classify_on_model(output_path, unmatched_files_level_2)
 
+    unmatched_files_level_3 = []
+    matched_files_level_3 = classify_on_model(output_path, unmatched_files_level_2,unmatched_files_level_3)
+    
     all_matched_files = (
         matched_files_level_1 + matched_files_level_2 + matched_files_level_3
     )
+    
+    for file in unmatched_files_level_3:
+        all_matched_files.append([file, "misc"])
 
-    print(all_matched_files)
+    df = pd.DataFrame(all_matched_files, columns=["File", "Folder"])
+    df.to_csv(output_path+"/final_result.csv")
 
 
-def classify_on_file_name(file, unmatched, matched):
+def classify_on_file_name(file, matched, unmatched):
     lexicon_dict: dict = readDir()
 
     # Boolean to tell us whether we found a match
@@ -341,25 +355,25 @@ def classify_on_file_name(file, unmatched, matched):
         for keyword in lexicon_dict[category]:
             # If the keyword is in the file name, we have a match
             if keyword.lower() in file.lower():
-                found_match = True
                 # If the category key isn't in the matches, then assign it
                 if not "folder" in sorted_file_dict:
                     sorted_file_dict["folder"] = category
+                    found_match = True
             # If no match, don't do shit
             else:
                 continue
 
     if found_match:
-        matched.append(sorted_file_dict)
+        matched.append([file,FILE_NAME_TO_SHORT_NAME[sorted_file_dict["folder"]]])
     else:
         unmatched.append(file)
 
 
-def classify_on_ext(file, unmatched, matched):
+def classify_on_ext(file, matched,unmatched):
     if "." in file:
         extension = file.split(".").pop()
         if extension in MISC_FILE_EXT:
-            matched.append({"file": file, "folder": "misc"})
+            matched.append([file,"misc"])
         else:
             unmatched.append(file)
     else:
