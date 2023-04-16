@@ -25,7 +25,7 @@ _ = "path-to-file"
 
 with open(_, "r") as sorted_file_json:
     # Load JSON and get array of dictionaries
-    sorted_file_dicts = json.load(sorted_file_json)
+    sorted_file_dicts = json.loads(sorted_file_json.read())
     # Loop on array of dictionaries
     for file_dict in sorted_file_dicts:
         # Get the file and category
