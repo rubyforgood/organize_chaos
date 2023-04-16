@@ -67,6 +67,8 @@
   ],
   "Business Support Office": [
     "Business Support Office",
+    "Assisted Business",
+    "businesses",
     "B.S.O.",
     "bso",
     "East Colfax businesses",
@@ -109,7 +111,6 @@
     "affordable",
     "redevelopment",
     "increase equity",
-    "equitable",
     "equitable",
     "equity",
     "Equity Development",
@@ -164,7 +165,6 @@
     "Fax Aid Program",
     "East Colfax corridor"
   ],
-<<<<<<< Updated upstream
   "Communication": [
     "Dialogue",
     "Conversation",
@@ -245,13 +245,12 @@
     "Customer service management",
     "Sales management",
     "Marketing management",
-    "Strategic management"
-  ]
-=======
-  "Communication": [],
-  "Admin": ["Job Description", "HR", "Administrative", "proposal", "Liability","report","budget","property tax", "sales tax", "compliance","accounting","Efficiency",
+    "Strategic management",
+    "Job Description", "HR", "Administrative", "proposal", "Liability","report","budget","property tax", "sales tax", "compliance","accounting","Efficiency",
     "Productivity",
     "Performance",
+    "Accounting",
+    "Onboarding",
     "Accountability",
     "Transparency",
     "Innovation",
@@ -265,6 +264,8 @@
     "Decision-making",
     "Stakeholder engagement",
     "Process improvement",
-    "Continuous improvement"]
->>>>>>> Stashed changes
+    "Continuous improvement",
+    "Grant",
+    "Job"
+  ]
 }
