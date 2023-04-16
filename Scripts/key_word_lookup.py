@@ -89,18 +89,42 @@ def run_analysis(output_path):
         motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words= find_cat_words(w_list, bi, tri, quad)
         df_list.append([file,len(w_list), motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words])
     df = pd.DataFrame(df_list, columns=['Filename','doc_word_count','motel_words','bso_words','edo_words', 'rso_issues_words', 'comm_words', 'admin_words'])
-    df['motel_words_perc'] = df['motel_words']/df['doc_word_count']
-    df['bso_words_perc'] = df['bso_words']/df['doc_word_count']
-    df['edo_words_perc'] = df['edo_words']/df['doc_word_count']
-    df['rso_issues_perc'] = df['rso_issues_words']/df['doc_word_count']
-    df['comm_words_perc'] = df['comm_words']/df['doc_word_count']
-    df['admin_perc'] = df['admin_words']/df['doc_word_count']
+    # df['motel_words_perc'] = df['motel_words']/df['doc_word_count']
+    # df['bso_words_perc'] = df['bso_words']/df['doc_word_count']
+    # df['edo_words_perc'] = df['edo_words']/df['doc_word_count']
+    # df['rso_issues_perc'] = df['rso_issues_words']/df['doc_word_count']
+    # df['comm_words_perc'] = df['comm_words']/df['doc_word_count']
+    # df['admin_perc'] = df['admin_words']/df['doc_word_count']
     #df['thefax_perc'] = df['thefax_words']/df['doc_word_count']
 
     print(df.shape)
     print(df)
     df.to_csv(output_path + "/RESULTS.csv")
-    breakpoint()
+    folderList = []
+    for index, row in df.iterrows():
+        #print(row['motel_words'],row['bso_words'],row['edo_words'], row['rso_issues_words'], row['comm_words'],row['admin_words'])
+        isMax = max(row['motel_words'],row['bso_words'],row['edo_words'], row['rso_issues_words'], row['comm_words'],row['admin_words'])
+        #folder = ""
+        if isMax == 0:
+            folder = "misc"
+        elif isMax == row['motel_words']:
+            folder = 'motel'
+        elif isMax == row['bso_words']:
+            folder = 'bso'
+        elif isMax == row['rso_issues_words']:
+            folder = 'rso'
+        elif isMax == row['comm_words']:
+            folder = 'comm'
+        elif isMax == row['admin_words']:
+            folder = 'admin'
+        elif isMax == row['edo_words']:
+            folder = 'edo'
+        else:
+            breakpoint()
+
+        folderList.append([row['Filename'],folder])
+    finalOutput = pd.DataFrame(folderList, columns=['Filename','Folder'])
+    finalOutput.to_csv(output_path + "/FinalOutput.csv" )
 
 def getText(filename):
     doc = docx.Document(filename)
@@ -110,7 +134,7 @@ def getText(filename):
     return '\n'.join(fullText)
 
 def filter_wordlist(word_list):
-    return [word.lower() for word in word_list if word not in stopwords.words('english') and len(word) > 3 and word not in ['tax','VAT','ODA', 'SDG', 'aid', 'CSO', 'FDI']]
+    return [word.lower() for word in word_list]
 
 def clean_keywords(word_list):
     word_list = filter_wordlist(word_list)
