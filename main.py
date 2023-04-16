@@ -1,8 +1,7 @@
-import sys
+from tqdm import tqdm
+from os.path import join, isfile, isdir
+import pypdfium2 as pdfium
 
-sys.path.append("./Scripts")
-import os
-from os.path import isfile, join, isdir
 import docx
 from collections import Counter
 from nltk import ngrams
@@ -22,6 +21,40 @@ from nltk.corpus import stopwords
 
 porter_stemmer = PorterStemmer()
 wordnet_lemmatizer = WordNetLemmatizer()
+
+import os
+import json
+import sys
+
+[_, DOCUMENTS] = sys.argv
+FILE_NAME_TO_SHORT_NAME = {
+"Motel": "motel",
+"Business Support Office": "bso",
+"Equity Development Office": "edo",
+"Resident Support Office": "rso",
+"Communication": "comm",
+"Admin": "admin",
+}
+MISC_FILE_EXT = [
+    "xlsx",
+    "html",
+    # "pdf",
+    "png",
+    # "docx",
+    "jpg",
+    "jpeg",
+    "zip",
+    "pptx",
+    "xls",
+    "pages",
+    # "csv",
+    "m4a",
+    # MAYBE GET TXT
+    "txt",
+    "conf",
+    "mp4",
+    "doc",
+]
 
 
 def get_ngrams(words):
@@ -92,18 +125,28 @@ def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
     return uni_count + bi_count + tri_count + quad_count
 
 
-def run_analysis(output_path):
+def classify_on_model(output_path, unmatched_files, unmatched):
     # files = get_word_files(os.getcwd(),[])
     files = [
         os.path.join(dp, f)
         for dp, dn, filenames in os.walk(os.getcwd())
         for f in filenames
-        if os.path.splitext(f)[1] == ".docx"
+        if f in unmatched_files
     ]
+
     df_list = []
     for file in tqdm(files):
         print(f"Processing {file} ...")
-        txt = getText(file)
+        # Do not move forward with anything that isn't docs or pdf
+        if os.path.splitext(file)[1].lower() not in [".docx", ".pdf"]:
+            unmatched.append(file)
+            continue
+
+        txt = (
+            getText(file)
+            if (os.path.splitext(file)[1].lower() == ".docx")
+            else get_pdf_content(file)
+        )
         w_list = tokenize(txt, [], type="word")
         bi, tri, quad = get_ngrams(w_list)
         (
@@ -180,7 +223,7 @@ def run_analysis(output_path):
             breakpoint()
 
         folderList.append([row["Filename"], folder])
-    return dict(folderList)
+    return folderList
     # pd.DataFrame(folderList, columns=['Filename','Folder'])
     # finalOutput.to_csv(output_path + "/FinalOutput.csv")
 
@@ -242,8 +285,109 @@ def get_top_n_words(file_name, word_list, output, n=10):
     df.to_csv(f"{output}/{file_name}_top_{n}_word_list.csv")
 
 
-if __name__ == "__main__":
-    local_path = "C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Documents"
-    os.chdir(local_path)
+def get_pdf_content(file: str) -> str:
+    """Derive the file contents of pdf"""
+    try:
+        pdf = pdfium.PdfDocument(file)
+        contents = ""
+        for i in range(len(pdf)):
+            page = pdf[i]
+            # Load a text page helper
+            textpage = page.get_textpage()
+            text_all = textpage.get_text_range()
+            contents += text_all
+
+        return contents
+    except Exception as e:
+        print(f"\n\nCannot parse PDF at '{file}'\n\n")
+        raise e
+
+
+def run_analysis():
     output_path = "C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Output"
-    run_analysis(output_path)
+    local_path = DOCUMENTS
+    os.chdir(local_path)
+    files = [
+        os.path.join(dir_path, f)
+        for dir_path, dir_names, filenames in os.walk(os.getcwd())
+        for f in filenames
+    ]
+
+    matched_files_level_1 = []
+    unmatched_files_level_1 = []
+
+    # Filter by file name
+    for file in tqdm(files):
+        classify_on_file_name(file, matched_files_level_1, unmatched_files_level_1)
+
+    matched_files_level_2 = []
+    unmatched_files_level_2 = []
+    # Filter by extension
+    for file in tqdm(unmatched_files_level_1):
+        classify_on_ext(files,matched_files_level_2, unmatched_files_level_2)
+
+
+    unmatched_files_level_3 = []
+    matched_files_level_3 = classify_on_model(output_path, unmatched_files_level_2,unmatched_files_level_3)
+    
+    all_matched_files = (
+        matched_files_level_1 + matched_files_level_2 + matched_files_level_3
+    )
+    
+    for file in unmatched_files_level_3:
+        all_matched_files.append([file, "misc"])
+
+    df = pd.DataFrame(all_matched_files, columns=["File", "Folder"])
+    df.to_csv(output_path+"/final_result.csv")
+
+
+def classify_on_file_name(file, matched, unmatched):
+    lexicon_dict: dict = readDir()
+
+    # Boolean to tell us whether we found a match
+    found_match = False
+    # Assign a dictionary to the file we are sorting
+    sorted_file_dict = {"file": file}
+
+    # For every category...
+    for category in lexicon_dict.keys():
+        # For every keyword in out lexicon array for the category...
+        for keyword in lexicon_dict[category]:
+            # If the keyword is in the file name, we have a match
+            if keyword.lower() in file.lower():
+                # If the category key isn't in the matches, then assign it
+                if not "folder" in sorted_file_dict:
+                    sorted_file_dict["folder"] = category
+                    found_match = True
+            # If no match, don't do shit
+            else:
+                continue
+
+    if found_match:
+        matched.append([file,FILE_NAME_TO_SHORT_NAME[sorted_file_dict["folder"]]])
+    else:
+        unmatched.append(file)
+
+
+def classify_on_ext(file, matched,unmatched):
+    if "." in file:
+        extension = file.split(".").pop()
+        if extension in MISC_FILE_EXT:
+            matched.append([file,"misc"])
+        else:
+            unmatched.append(file)
+    else:
+        unmatched.append(file)
+
+
+def readDir():
+    with open(
+        "C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Resources/lexicon.json",
+        "r",
+    ) as j:
+        lex = json.loads(j.read())
+    return lex
+
+
+if "__main__" == __name__:
+    run_analysis()
