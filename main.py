@@ -1,4 +1,4 @@
-from tdqm import tqdm
+from tqdm import tqdm
 from os.path import join, isfile, isdir
 
 import os
@@ -59,8 +59,7 @@ def run_analysis():
     print(all_matched_files)
 
 
-if "__main__" == __name__:
-    run_analysis()
+
 
 
 def classify_on_file_name(file, unmatched, matched):
@@ -79,7 +78,7 @@ def classify_on_file_name(file, unmatched, matched):
             if keyword.lower() in file.lower():
                 found_match = True
                 # If the category key isn't in the matches, then assign it
-                if category not in sorted_file_dict["matches"]:
+                if not "folder" in sorted_file_dict:
                     sorted_file_dict["folder"] = category
             # If no match, don't do shit
             else:
@@ -92,9 +91,16 @@ def classify_on_file_name(file, unmatched, matched):
 
 
 def classify_on_ext(file, unmatched, matched):
-    extension = file.split(".").pop()
-    if extension in MISC_FILE_EXT:
-        matched
+    if "." in file:
+        extension = file.split(".").pop()
+        if extension in MISC_FILE_EXT:
+            matched.append({"file":file, "folder":"misc"})
+        else:
+            unmatched.append(file)
+    else:
+        unmatched.append(file)
+
+    
 
 
 def classify_on_model():
@@ -102,6 +108,9 @@ def classify_on_model():
 
 
 def readDir():
-    with open("./Resources/lexicon.json", "r") as j:
+    with open("C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Resources/lexicon.json", "r") as j:
         lex = json.loads(j.read())
     return lex
+
+if "__main__" == __name__:
+    run_analysis()
