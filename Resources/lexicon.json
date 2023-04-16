@@ -164,6 +164,7 @@
     "Fax Aid Program",
     "East Colfax corridor"
   ],
+<<<<<<< Updated upstream
   "Communication": [
     "Dialogue",
     "Conversation",
@@ -246,4 +247,24 @@
     "Marketing management",
     "Strategic management"
   ]
+=======
+  "Communication": [],
+  "Admin": ["Job Description", "HR", "Administrative", "proposal", "Liability","report","budget","property tax", "sales tax", "compliance","accounting","Efficiency",
+    "Productivity",
+    "Performance",
+    "Accountability",
+    "Transparency",
+    "Innovation",
+    "Agility",
+    "Sustainability",
+    "Risk management",
+    "Cost control",
+    "Resource allocation",
+    "Strategic planning",
+    "Change management",
+    "Decision-making",
+    "Stakeholder engagement",
+    "Process improvement",
+    "Continuous improvement"]
+>>>>>>> Stashed changes
 }
