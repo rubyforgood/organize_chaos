@@ -1,11 +1,25 @@
+import sys
+sys.path.append("./Scripts")
 import os
-from Scripts.utilities import get_word_files, getText, tokenize, clean_keywords, get_country_year
+from os.path import isfile, join,isdir
+import docx
 from collections import Counter
 from nltk import ngrams
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import json
 import pandas as pd
 from tqdm import tqdm
+from nltk.corpus import stopwords
+from collections import Counter
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
+porter_stemmer = PorterStemmer()
+wordnet_lemmatizer = WordNetLemmatizer()
+
 
 def get_ngrams(words):
     bi = [words[i:i + 2] for i in range(len(words) - 2 + 1)]
@@ -23,17 +37,17 @@ def get_n_gram_counts(word_list, n_range=3, top_n=10):
 
 def find_cat_words(word_list, bi, tri, quad):
     # lex = open('../resources/lexicon.json')
-    with open('../Resources/lexicon.json', 'r') as j:
+    with open('C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Resources/lexicon.json', 'r') as j:
         lex = json.loads(j.read())
 
-    motel_words = get_key_gram_count(lex['Motels Work'], word_list, bi, tri, quad)
+    motel_words = get_key_gram_count(lex['Motel'], word_list, bi, tri, quad)
     bso_words = get_key_gram_count(lex['Business Support Office'], word_list, bi, tri, quad)
     edo_words = get_key_gram_count(lex['Equity Development Office'], word_list, bi, tri, quad)
-    rso_issues_words = get_key_gram_count(lex['Resident Support Office"'], word_list, bi, tri, quad)
+    rso_issues_words = get_key_gram_count(lex['Resident Support Office'], word_list, bi, tri, quad)
     comm_words = get_key_gram_count(lex['Communication'], word_list, bi, tri, quad)
     admin_words = get_key_gram_count(lex['Admin'], word_list, bi, tri, quad)
-    thefax_words = get_key_gram_count(lex['The Fax'], word_list, bi, tri, quad)
-    return motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words, thefax_words
+    #thefax_words = get_key_gram_count(lex['The Fax'], word_list, bi, tri, quad)
+    return motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words
 
 def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
     kw_unigrams = clean_keywords(key_words)
@@ -62,42 +76,87 @@ def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
     # print(f"There are a total of {tri_count} TRIGRAM MATCHES")
     return uni_count+bi_count+tri_count+quad_count
 
-def get_top_keywords(n_range=4, top_n=15):
-    files = get_word_files(os.getcwd())
-    all_documents_word_list = []
-    for file in tqdm(files):
-        txt = getText(file)
-        w_list = tokenize(txt, [], type="word")
-        all_documents_word_list.extend(w_list)
-    get_n_gram_counts(all_documents_word_list, n_range, top_n)
 
 def run_analysis(output_path):
-    files = get_word_files(os.getcwd())
+    # files = get_word_files(os.getcwd(),[])
+    files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(os.getcwd()) for f in filenames if os.path.splitext(f)[1] == '.docx']
     df_list = []
     for file in tqdm(files):
         print(f"Processing {file} ...")
         txt = getText(file)
         w_list = tokenize(txt, [], type="word")
         bi, tri, quad = get_ngrams(w_list)
-        motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words, thefax_words= find_cat_words(w_list, bi, tri, quad)
-        df_list.append([len(w_list), motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words, thefax_words])
-    df = pd.DataFrame(df_list, columns=['doc_word_count','motel_words','bso_words','edo_words', 'rso_issues_words', 'comm_words', 'admin_words', 'thefax_words'])
+        motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words= find_cat_words(w_list, bi, tri, quad)
+        df_list.append([file,len(w_list), motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words])
+    df = pd.DataFrame(df_list, columns=['Filename','doc_word_count','motel_words','bso_words','edo_words', 'rso_issues_words', 'comm_words', 'admin_words'])
     df['motel_words_perc'] = df['motel_words']/df['doc_word_count']
-    df['bso_words_perc'] = df['finance_words']/df['doc_word_count']
-    df['edo_words_perc'] = df['tech_words']/df['doc_word_count']
+    df['bso_words_perc'] = df['bso_words']/df['doc_word_count']
+    df['edo_words_perc'] = df['edo_words']/df['doc_word_count']
     df['rso_issues_perc'] = df['rso_issues_words']/df['doc_word_count']
     df['comm_words_perc'] = df['comm_words']/df['doc_word_count']
     df['admin_perc'] = df['admin_words']/df['doc_word_count']
-    df['thefax_perc'] = df['thefax_words']/df['doc_word_count']
+    #df['thefax_perc'] = df['thefax_words']/df['doc_word_count']
 
     print(df.shape)
     print(df)
     df.to_csv(output_path + "/RESULTS.csv")
+    breakpoint()
+
+def getText(filename):
+    doc = docx.Document(filename)
+    fullText = []
+    for para in doc.paragraphs:
+        fullText.append(para.text)
+    return '\n'.join(fullText)
+
+def filter_wordlist(word_list):
+    return [word.lower() for word in word_list if word not in stopwords.words('english') and len(word) > 3 and word not in ['tax','VAT','ODA', 'SDG', 'aid', 'CSO', 'FDI']]
+
+def clean_keywords(word_list):
+    word_list = filter_wordlist(word_list)
+    cleaned_keywords = stemming_lemming(word_list)
+    return cleaned_keywords
+
+def tokenize(text, exclude_words, type="word"):
+    for spec_char in '''!()-[]{};:'"\,<>/.?@#$%^&*_~''':
+        text = text.replace(spec_char, "")
+    exclude_words.extend(["also"])
+    if type != '\n':
+        text = text.replace('\n', "")
+    if type == "word":
+        lang_list = text.split()
+        lang_list = filter_wordlist(lang_list)
+        lang_list = stemming_lemming(lang_list)
+        final_list = [word for word in lang_list if word not in exclude_words]
+    elif type == "sentence":
+        final_list = text.split(".")
+    return final_list
+
+def stemming_lemming(word_list, stem=True):
+    if stem:
+        words = [porter_stemmer.stem(word) for word in word_list]
+    else:
+        words = [wordnet_lemmatizer.lemmatize(word) for word in word_list]
+    return words
+
+
+def get_top_n_words(file_name, word_list, output, n=10):
+    vocab_d = {}
+    filtered_words = filter_wordlist(word_list)
+    for word in filtered_words:
+        if word not in vocab_d:
+            vocab_d[word] = 1
+        else:
+            vocab_d[word] += 1
+    df = pd.DataFrame(vocab_d.items(), columns=['Word', 'Count'])
+    df = df.sort_values(by='Count', ascending=False)
+    df = df.head(n)
+    print(df)
+    df.to_csv(f"{output}/{file_name}_top_{n}_word_list.csv")
 
 
 if __name__ == "__main__":
-    local_path = '/Users/bcard/projects/air/organize_chaos/Documents'
+    local_path = 'C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Documents'
     os.chdir(local_path)
-    output_path = '/Users/bcard/projects/air/organize_chaos/Output'
+    output_path = 'C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Output'
     run_analysis(output_path)
-    get_top_keywords()
