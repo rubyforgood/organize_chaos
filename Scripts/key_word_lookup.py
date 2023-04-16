@@ -1,7 +1,8 @@
 import sys
+
 sys.path.append("./Scripts")
 import os
-from os.path import isfile, join,isdir
+from os.path import isfile, join, isdir
 import docx
 from collections import Counter
 from nltk import ngrams
@@ -12,42 +13,56 @@ from tqdm import tqdm
 from nltk.corpus import stopwords
 from collections import Counter
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 import nltk
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
+
 porter_stemmer = PorterStemmer()
 wordnet_lemmatizer = WordNetLemmatizer()
 
 
 def get_ngrams(words):
-    bi = [words[i:i + 2] for i in range(len(words) - 2 + 1)]
-    tri = [words[i:i + 3] for i in range(len(words) - 3 + 1)]
-    quad = [words[i:i + 4] for i in range(len(words) - 4 + 1)]
+    bi = [words[i : i + 2] for i in range(len(words) - 2 + 1)]
+    tri = [words[i : i + 3] for i in range(len(words) - 3 + 1)]
+    quad = [words[i : i + 4] for i in range(len(words) - 4 + 1)]
     return bi, tri, quad
 
+
 def get_n_gram_counts(word_list, n_range=3, top_n=10):
-    for nn in range(1, (n_range+1)):
+    for nn in range(1, (n_range + 1)):
         print(" ")
         print(f"Processing {nn} ...")
         print(" ")
         ngram_counts = Counter(ngrams(word_list, nn))
         print(ngram_counts.most_common(top_n))
 
+
 def find_cat_words(word_list, bi, tri, quad):
     # lex = open('../resources/lexicon.json')
-    with open('C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Resources/lexicon.json', 'r') as j:
+    with open(
+        "C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Resources/lexicon.json",
+        "r",
+    ) as j:
         lex = json.loads(j.read())
 
-    motel_words = get_key_gram_count(lex['Motel'], word_list, bi, tri, quad)
-    bso_words = get_key_gram_count(lex['Business Support Office'], word_list, bi, tri, quad)
-    edo_words = get_key_gram_count(lex['Equity Development Office'], word_list, bi, tri, quad)
-    rso_issues_words = get_key_gram_count(lex['Resident Support Office'], word_list, bi, tri, quad)
-    comm_words = get_key_gram_count(lex['Communication'], word_list, bi, tri, quad)
-    admin_words = get_key_gram_count(lex['Admin'], word_list, bi, tri, quad)
-    #thefax_words = get_key_gram_count(lex['The Fax'], word_list, bi, tri, quad)
+    motel_words = get_key_gram_count(lex["Motel"], word_list, bi, tri, quad)
+    bso_words = get_key_gram_count(
+        lex["Business Support Office"], word_list, bi, tri, quad
+    )
+    edo_words = get_key_gram_count(
+        lex["Equity Development Office"], word_list, bi, tri, quad
+    )
+    rso_issues_words = get_key_gram_count(
+        lex["Resident Support Office"], word_list, bi, tri, quad
+    )
+    comm_words = get_key_gram_count(lex["Communication"], word_list, bi, tri, quad)
+    admin_words = get_key_gram_count(lex["Admin"], word_list, bi, tri, quad)
+    # thefax_words = get_key_gram_count(lex['The Fax'], word_list, bi, tri, quad)
     return motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words
+
 
 def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
     kw_unigrams = clean_keywords(key_words)
@@ -63,90 +78,137 @@ def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
         uni_count = uni_count + temp
     # print(f"There are a total of {uni_count} UNIGRAM MATCHES")
     for bigram in kw_bigrams:
-        temp = nvr_bi.count(bigram)*2
+        temp = nvr_bi.count(bigram) * 2
         bi_count = bi_count + temp
     # print(f"There are a total of {bi_count} BIGRAM MATCHES")
     for trigram in kw_trigrams:
-        temp = nvr_tri.count(trigram)*3
+        temp = nvr_tri.count(trigram) * 3
         tri_count = tri_count + temp
     # print(f"There are a total of {tri_count} TRIGRAM MATCHES")
     for quad in kw_quadgrams:
-        temp = nvr_quad.count(quad)*4
+        temp = nvr_quad.count(quad) * 4
         quad_count = quad_count + temp
     # print(f"There are a total of {tri_count} TRIGRAM MATCHES")
-    return uni_count+bi_count+tri_count+quad_count
+    return uni_count + bi_count + tri_count + quad_count
 
 
 def run_analysis(output_path):
     # files = get_word_files(os.getcwd(),[])
-    files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(os.getcwd()) for f in filenames if os.path.splitext(f)[1] == '.docx']
+    files = [
+        os.path.join(dp, f)
+        for dp, dn, filenames in os.walk(os.getcwd())
+        for f in filenames
+        if os.path.splitext(f)[1] == ".docx"
+    ]
     df_list = []
     for file in tqdm(files):
         print(f"Processing {file} ...")
         txt = getText(file)
         w_list = tokenize(txt, [], type="word")
         bi, tri, quad = get_ngrams(w_list)
-        motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words= find_cat_words(w_list, bi, tri, quad)
-        df_list.append([file,len(w_list), motel_words, bso_words, edo_words, rso_issues_words, comm_words, admin_words])
-    df = pd.DataFrame(df_list, columns=['Filename','doc_word_count','motel_words','bso_words','edo_words', 'rso_issues_words', 'comm_words', 'admin_words'])
+        (
+            motel_words,
+            bso_words,
+            edo_words,
+            rso_issues_words,
+            comm_words,
+            admin_words,
+        ) = find_cat_words(w_list, bi, tri, quad)
+        df_list.append(
+            [
+                file,
+                len(w_list),
+                motel_words,
+                bso_words,
+                edo_words,
+                rso_issues_words,
+                comm_words,
+                admin_words,
+            ]
+        )
+    df = pd.DataFrame(
+        df_list,
+        columns=[
+            "Filename",
+            "doc_word_count",
+            "motel_words",
+            "bso_words",
+            "edo_words",
+            "rso_issues_words",
+            "comm_words",
+            "admin_words",
+        ],
+    )
     # df['motel_words_perc'] = df['motel_words']/df['doc_word_count']
     # df['bso_words_perc'] = df['bso_words']/df['doc_word_count']
     # df['edo_words_perc'] = df['edo_words']/df['doc_word_count']
     # df['rso_issues_perc'] = df['rso_issues_words']/df['doc_word_count']
     # df['comm_words_perc'] = df['comm_words']/df['doc_word_count']
     # df['admin_perc'] = df['admin_words']/df['doc_word_count']
-    #df['thefax_perc'] = df['thefax_words']/df['doc_word_count']
+    # df['thefax_perc'] = df['thefax_words']/df['doc_word_count']
 
     print(df.shape)
     print(df)
     df.to_csv(output_path + "/RESULTS.csv")
     folderList = []
     for index, row in df.iterrows():
-        #print(row['motel_words'],row['bso_words'],row['edo_words'], row['rso_issues_words'], row['comm_words'],row['admin_words'])
-        isMax = max(row['motel_words'],row['bso_words'],row['edo_words'], row['rso_issues_words'], row['comm_words'],row['admin_words'])
-        #folder = ""
+        # print(row['motel_words'],row['bso_words'],row['edo_words'], row['rso_issues_words'], row['comm_words'],row['admin_words'])
+        isMax = max(
+            row["motel_words"],
+            row["bso_words"],
+            row["edo_words"],
+            row["rso_issues_words"],
+            row["comm_words"],
+            row["admin_words"],
+        )
+        # folder = ""
         if isMax == 0:
             folder = "misc"
-        elif isMax == row['motel_words']:
-            folder = 'motel'
-        elif isMax == row['bso_words']:
-            folder = 'bso'
-        elif isMax == row['rso_issues_words']:
-            folder = 'rso'
-        elif isMax == row['comm_words']:
-            folder = 'comm'
-        elif isMax == row['admin_words']:
-            folder = 'admin'
-        elif isMax == row['edo_words']:
-            folder = 'edo'
+        elif isMax == row["motel_words"]:
+            folder = "motel"
+        elif isMax == row["bso_words"]:
+            folder = "bso"
+        elif isMax == row["rso_issues_words"]:
+            folder = "rso"
+        elif isMax == row["comm_words"]:
+            folder = "comm"
+        elif isMax == row["admin_words"]:
+            folder = "admin"
+        elif isMax == row["edo_words"]:
+            folder = "edo"
         else:
             breakpoint()
 
-        folderList.append([row['Filename'],folder])
-    finalOutput = pd.DataFrame(folderList, columns=['Filename','Folder'])
-    finalOutput.to_csv(output_path + "/FinalOutput.csv" )
+        folderList.append([row["Filename"], folder])
+    return dict(folderList)
+    # pd.DataFrame(folderList, columns=['Filename','Folder'])
+    # finalOutput.to_csv(output_path + "/FinalOutput.csv")
+
 
 def getText(filename):
     doc = docx.Document(filename)
     fullText = []
     for para in doc.paragraphs:
         fullText.append(para.text)
-    return '\n'.join(fullText)
+    return "\n".join(fullText)
+
 
 def filter_wordlist(word_list):
     return [word.lower() for word in word_list]
+
 
 def clean_keywords(word_list):
     word_list = filter_wordlist(word_list)
     cleaned_keywords = stemming_lemming(word_list)
     return cleaned_keywords
 
+
 def tokenize(text, exclude_words, type="word"):
-    for spec_char in '''!()-[]{};:'"\,<>/.?@#$%^&*_~''':
+    for spec_char in """!()-[]{};:'"\,<>/.?@#$%^&*_~""":
         text = text.replace(spec_char, "")
     exclude_words.extend(["also"])
-    if type != '\n':
-        text = text.replace('\n', "")
+    if type != "\n":
+        text = text.replace("\n", "")
     if type == "word":
         lang_list = text.split()
         lang_list = filter_wordlist(lang_list)
@@ -155,6 +217,7 @@ def tokenize(text, exclude_words, type="word"):
     elif type == "sentence":
         final_list = text.split(".")
     return final_list
+
 
 def stemming_lemming(word_list, stem=True):
     if stem:
@@ -172,15 +235,15 @@ def get_top_n_words(file_name, word_list, output, n=10):
             vocab_d[word] = 1
         else:
             vocab_d[word] += 1
-    df = pd.DataFrame(vocab_d.items(), columns=['Word', 'Count'])
-    df = df.sort_values(by='Count', ascending=False)
+    df = pd.DataFrame(vocab_d.items(), columns=["Word", "Count"])
+    df = df.sort_values(by="Count", ascending=False)
     df = df.head(n)
     print(df)
     df.to_csv(f"{output}/{file_name}_top_{n}_word_list.csv")
 
 
 if __name__ == "__main__":
-    local_path = 'C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Documents'
+    local_path = "C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Documents"
     os.chdir(local_path)
-    output_path = 'C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Output'
+    output_path = "C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/Output"
     run_analysis(output_path)
