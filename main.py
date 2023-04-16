@@ -1,5 +1,26 @@
 from tqdm import tqdm
 from os.path import join, isfile, isdir
+import pypdfium2 as pdfium
+
+import docx
+from collections import Counter
+from nltk import ngrams
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+import json
+import pandas as pd
+from tqdm import tqdm
+from nltk.corpus import stopwords
+from collections import Counter
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
+
+porter_stemmer = PorterStemmer()
+wordnet_lemmatizer = WordNetLemmatizer()
 
 import os
 import json
@@ -26,31 +47,6 @@ MISC_FILE_EXT = [
     "mp4",
     "doc",
 ]
-
-import sys
-
-sys.path.append("./Scripts")
-import os
-from os.path import isfile, join, isdir
-import docx
-from collections import Counter
-from nltk import ngrams
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-import json
-import pandas as pd
-from tqdm import tqdm
-from nltk.corpus import stopwords
-from collections import Counter
-import warnings
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-import nltk
-from nltk.stem import WordNetLemmatizer
-from nltk.stem.porter import PorterStemmer
-from nltk.corpus import stopwords
-
-porter_stemmer = PorterStemmer()
-wordnet_lemmatizer = WordNetLemmatizer()
 
 
 def get_ngrams(words):
@@ -121,18 +117,28 @@ def get_key_gram_count(key_words, nvr_uni, nvr_bi, nvr_tri, nvr_quad):
     return uni_count + bi_count + tri_count + quad_count
 
 
-def classify_on_model(output_path, files):
+def classify_on_model(output_path, unmatched_files, unmatched):
     # files = get_word_files(os.getcwd(),[])
     files = [
         os.path.join(dp, f)
         for dp, dn, filenames in os.walk(os.getcwd())
         for f in filenames
-        if f in files
+        if f in unmatched_files
     ]
+
     df_list = []
     for file in tqdm(files):
         print(f"Processing {file} ...")
-        txt = getText(file)
+        # Do not move forward with anything that isn't docs or pdf
+        if os.path.splitext(file)[1].lower() not in [".docx", ".pdf"]:
+            unmatched.append(file)
+            continue
+
+        txt = (
+            getText(file)
+            if (os.path.splitext(file)[1].lower() == ".docx")
+            else get_pdf_content(file)
+        )
         w_list = tokenize(txt, [], type="word")
         bi, tri, quad = get_ngrams(w_list)
         (
@@ -269,6 +275,24 @@ def get_top_n_words(file_name, word_list, output, n=10):
     df = df.head(n)
     print(df)
     df.to_csv(f"{output}/{file_name}_top_{n}_word_list.csv")
+
+
+def get_pdf_content(file: str) -> str:
+    """Derive the file contents of pdf"""
+    try:
+        pdf = pdfium.PdfDocument(file)
+        contents = ""
+        for i in range(len(pdf)):
+            page = pdf[i]
+            # Load a text page helper
+            textpage = page.get_textpage()
+            text_all = textpage.get_text_range()
+            contents += text_all
+
+        return contents
+    except Exception as e:
+        print(f"\n\nCannot parse PDF at '{file}'\n\n")
+        raise e
 
 
 def run_analysis():
