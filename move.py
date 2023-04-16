@@ -1,6 +1,8 @@
 import json
 import sys
 import subprocess
+import os
+import pandas as pd
 
 [_, FINAL_OUTPUT] = sys.argv
 
@@ -39,18 +41,19 @@ SHORT_NAME_TO_FILE_NAME = {
 # REMEMBER: The `mv` command WILL permanently remove the original file, so use the
 # `cp` command until positive this code does what you want.
 
+data_Frame = pd.read_csv(FINAL_OUTPUT)
+sorted_file_array = list(data_Frame["File"])
 
-with open(FINAL_OUTPUT, "r") as sorted_files:
-    # Load JSON and get array of dictionaries
-    sorted_file_array = sorted_files.readlines()
     # Loop on array of arrays
-    for line in sorted_file_array:
-        if (sorted_file_array[0]) == line:
-            continue
 
-        [index, file, folder] = line.split(",")
-        # Get the file and category
-        category = SHORT_NAME_TO_FILE_NAME[folder]
+
+    
+for index in range(len(sorted_file_array)):
+    file = sorted_file_array[index]
+    folder = list(data_Frame["Folder"])[index]
+    
+    # Get the file and category
+    category = folder.replace("\n","")
 
         #  --- DEPRECATED  --------------
 
@@ -79,7 +82,7 @@ with open(FINAL_OUTPUT, "r") as sorted_files:
         #     category: str = category[
         #         int(
         #             input(
-        #                 f"\n\nThe file in question: `{file}`\n\nIt has multiple categories: {category}\n\nEnter the index of the category: "
+        #                 f"/n/nThe file in question: `{file}`/n/nIt has multiple categories: {category}/n/nEnter the index of the category: "
         #             )
         #         )
         #     ]
@@ -87,6 +90,7 @@ with open(FINAL_OUTPUT, "r") as sorted_files:
         #     category: str = category.pop()
 
         # Assign where the file will be copies to
-        moved_dir = f"./GoogleDrive/{category}"
-        # Run the subprocess to move it.
-        subprocess.run(["cp", file, moved_dir])
+    moved_dir=os.path.join("C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/GoogleDrive/", category)
+    #moved_dir = f"C:/Users/ramosv/Desktop/MileHighHack/organize_chaos/GoogleDrive/{category}"
+    # Run the subprocess to move it.
+    subprocess.run(["cp", file, moved_dir])
