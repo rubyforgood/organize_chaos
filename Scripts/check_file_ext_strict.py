@@ -1,52 +1,49 @@
 import sys
-import os
 from os import listdir
-from os.path import isfile, join
+from os.path import isdir, isfile, join
 import json
 import pandas as pd
 
 
-def readDir():
-    with open('./Resources/lexicon.json', 'r') as j:
+def read_json() -> dict:
+    with open("./Resources/lexicon.json", "r") as j:
         lex = json.loads(j.read())
     return lex
-    
 
-def reader():
-    [] = sys.argv
-    #[_,dir] = sys.argv
-    #extensions = {}
-    #readerFiles(dir, extensions)
-    #print(extensions)   
 
-# def readerFiles(path, extensions):
-             
-#     for f in listdir(path):
-#         if isfile(join(path, f)):
-#             extension = f.split(".").pop()
-#             if not extension in extensions:
-#                 extensions[extension] = 1
-#             else:
-#                 extensions[extension] +=1
-#         else:
-#             dir = f"{path}/{f}"
-#             readerFiles(dir,extensions)
+def count_file_ext():
+    [_, dir] = sys.argv
+    extensions = {}
+    check_file_ext(dir, extensions)
+
+
+def check_file_ext(path, extensions):
+    for f in listdir(path):
+        if isfile(join(path, f)):
+            extension = f.split(".").pop()
+            if not extension in extensions:
+                extensions[extension] = 1
+            else:
+                extensions[extension] += 1
+        else:
+            dir = f"{path}/{f}"
+            check_file_ext(dir, extensions)
+
 
 def checkForLex(path):
-    lex = readDir()
-    mainList = []
-    for f in listdir(path):
+    lex = read_json()
+    main_list = []
+    for file in listdir(path):
         for word in lex:
-            if word.lower() in f.lower():
-                mainList.append([f,word])
+            if isdir(file) and word.lower() in file.lower():
+                main_list.append([file, word])
             else:
                 continue
-    df = pd.DataFrame(mainList, columns=["File name", "Word"])
-    breakpoint()
+
+    df = pd.DataFrame(main_list, columns=["File name", "Word"])
     return df
-                
+
 
 if __name__ == "__main__":
-    #reader()
     path = "C:/Users/ramosv/Desktop/MileHack - The Fax Denver"
     checkForLex(path)
