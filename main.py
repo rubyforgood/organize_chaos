@@ -28,12 +28,12 @@ import sys
 
 [_, DOCUMENTS] = sys.argv
 FILE_NAME_TO_SHORT_NAME = {
-"Motel": "motel",
-"Business Support Office": "bso",
-"Equity Development Office": "edo",
-"Resident Support Office": "rso",
-"Communication": "comm",
-"Admin": "admin",
+    "Motel": "motel",
+    "Business Support Office": "bso",
+    "Equity Development Office": "edo",
+    "Resident Support Office": "rso",
+    "Communication": "comm",
+    "Admin": "admin",
 }
 MISC_FILE_EXT = [
     "xlsx",
@@ -324,21 +324,22 @@ def run_analysis():
     unmatched_files_level_2 = []
     # Filter by extension
     for file in tqdm(unmatched_files_level_1):
-        classify_on_ext(files,matched_files_level_2, unmatched_files_level_2)
-
+        classify_on_ext(files, matched_files_level_2, unmatched_files_level_2)
 
     unmatched_files_level_3 = []
-    matched_files_level_3 = classify_on_model(output_path, unmatched_files_level_2,unmatched_files_level_3)
-    
+    matched_files_level_3 = classify_on_model(
+        output_path, unmatched_files_level_2, unmatched_files_level_3
+    )
+
     all_matched_files = (
         matched_files_level_1 + matched_files_level_2 + matched_files_level_3
     )
-    
+
     for file in unmatched_files_level_3:
         all_matched_files.append([file, "misc"])
 
     df = pd.DataFrame(all_matched_files, columns=["File", "Folder"])
-    df.to_csv(output_path+"/final_result.csv")
+    df.to_csv(output_path + "/FinalOutput.csv")
 
 
 def classify_on_file_name(file, matched, unmatched):
@@ -364,16 +365,16 @@ def classify_on_file_name(file, matched, unmatched):
                 continue
 
     if found_match:
-        matched.append([file,FILE_NAME_TO_SHORT_NAME[sorted_file_dict["folder"]]])
+        matched.append([file, FILE_NAME_TO_SHORT_NAME[sorted_file_dict["folder"]]])
     else:
         unmatched.append(file)
 
 
-def classify_on_ext(file, matched,unmatched):
+def classify_on_ext(file, matched, unmatched):
     if "." in file:
         extension = file.split(".").pop()
         if extension in MISC_FILE_EXT:
-            matched.append([file,"misc"])
+            matched.append([file, "misc"])
         else:
             unmatched.append(file)
     else:
