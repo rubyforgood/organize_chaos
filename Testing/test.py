@@ -1,5 +1,3 @@
-import sys
-
 import pypdfium2 as pdfium
 
 
@@ -21,4 +19,5 @@ def get_pdf_content(file: str) -> str:
         raise e
 
 
-print(get_pdf_content("./Testing/waiver.pdf"))
+if "__main__" == __name__:
+    print(get_pdf_content("./Testing/test.pdf"))
