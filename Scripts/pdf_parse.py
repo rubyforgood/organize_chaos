@@ -17,7 +17,3 @@ def get_pdf_content(file: str) -> str:
     except Exception as e:
         print(f"\n\nCannot parse PDF at '{file}'\n\n")
         raise e
-
-
-if "__main__" == __name__:
-    print(get_pdf_content("./Testing/test.pdf"))
